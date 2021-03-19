@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">CubeTimer</string>
+    <string name="button">Start</string>
+    <string name="scramble">D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2 D2</string>
+    <string name="cronometer">00:00:00</string>
+
 </resources>
