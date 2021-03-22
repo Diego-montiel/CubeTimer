@@ -13,10 +13,13 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- //
+    String[][] movements = {{"U", "U'", "U2"}, {"D", "D'", "D2"}, {"L", "L'", "L2"}, {"R", "R'", "R2"}, {"F", "F'", "F2"}, {"B", "B'", "B2"}};
+    Random generator = new Random();
+    int previusNumber = 0;
     int random;
     String scramble = "";
     int clicks = 0;
@@ -25,7 +28,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ListView timeList;
     DataBaseHandler dbh;
     ArrayList<HashMap<String, String>> timesList;
-    String[] movements = {"U", "L", "F", "R", "B", "D", "U'", "L'", "F'", "R'", "B'", "D'", "U2", "L2", "F2", "R2", "B2", "D2"};
     Thread thread;
     int min = 0, seg = 0, mil = 0;
     Handler h = new Handler();
@@ -33,6 +35,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         startStop = findViewById(R.id.button);
@@ -48,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         e.printStackTrace();
                     }
                     mil++;
-                    if (mil == 668) {
+                    if (mil == 667) {
                         seg++;
                         mil = 0;
                     }
@@ -107,13 +111,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     void scramble() {
         scramble = "";
         for (int i = 0; i < 20; i++) {
-            random = (int) (Math.random() * (17 + 1) + 0);
-            scramble += "  " + movements[random];
+            random = generator.nextInt(6);
+            while (previusNumber == random) {
+                random = generator.nextInt(6);
+            }
+            scramble += "  " + movements[random][generator.nextInt(3)];
+            previusNumber = random;
         }
         scrambleTv.setText(scramble);
-
     }
-
+    
     void refreshTable() {
         dbh = new DataBaseHandler(MainActivity.this);
         timesList = dbh.getTimes();
