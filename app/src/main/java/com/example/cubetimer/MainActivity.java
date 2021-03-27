@@ -2,17 +2,13 @@ package com.example.cubetimer;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -25,88 +21,58 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     int clicks = 0;
     Button startStop;
     TextView scrambleTv;
-    ListView timeList;
-    DataBaseHandler dbh;
-    ArrayList<HashMap<String, String>> timesList;
-    Thread thread;
-    int min = 0, seg = 0, mil = 0;
-    Handler h = new Handler();
-    boolean isOn = false;
+    long MillisecondTime, StartTime, TimeBuff, UpdateTime = 0L ;
+    int minutes = 0, seconds = 0, miliSeconds = 0;
+    Handler handler ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         startStop = findViewById(R.id.button);
         scrambleTv = findViewById(R.id.scrambleTV);
         scramble();
+        handler = new Handler();
         startStop.setOnClickListener(this);
-        thread = new Thread(() -> {
-            while (true) {
-                if (isOn) {
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    mil++;
-                    if (mil == 667) {
-                        seg++;
-                        mil = 0;
-                    }
-                    if (seg == 60) {
-                        min++;
-                        seg = 0;
-                    }
-                    h.post(() -> {
-                        String m, s, mi, result = "";
-                        if (mil < 10) {
-                            m = "00" + mil;
-                        } else if (mil < 100) {
-                            m = "0" + mil;
-                        } else {
-                            m = "" + mil;
-                        }
-                        if (seg < 10) {
-                            s = "0" + seg;
-                        } else {
-                            s = "" + seg;
-                        }
-                        if (min < 10) {
-                            mi = "0" + min;
-                        } else {
-                            mi = "" + min;
-                        }
-                        startStop.setText(result.concat(mi + ":" + s + ":" + m));
-                    });
-
-                }
-            }
-        });
-        thread.start();
 
     }
-
     @Override
     public void onClick(View v) {
         if (clicks == 0) {
-            isOn = true;
+            StartTime = SystemClock.uptimeMillis();
+            handler.postDelayed(runnable, 0);
             clicks++;
         } else if (clicks == 1) {
-            isOn = false;
+            TimeBuff += MillisecondTime;
+            handler.removeCallbacks(runnable);
             clicks++;
         } else if (clicks == 2) {
             String startStopText = "00:00:000";
             startStop.setText(startStopText);
-            min = 0;
-            seg = 0;
-            mil = 0;
+            MillisecondTime = 0L ;
+            StartTime = 0L ;
+            TimeBuff = 0L ;
+            UpdateTime = 0L ;
+            seconds = 0 ;
+            minutes = 0 ;
+            miliSeconds = 0 ;
             scramble();
             clicks = 0;
         }
     }
+
+    public Runnable runnable = new Runnable() {
+        public void run() {
+            MillisecondTime = SystemClock.uptimeMillis() - StartTime;
+            UpdateTime = TimeBuff + MillisecondTime;
+            seconds = (int) (UpdateTime / 1000);
+            minutes = seconds / 60;
+            seconds = seconds % 60;
+            miliSeconds = (int) (UpdateTime % 1000);
+            startStop.setText(new StringBuilder().append(String.format("%02d", minutes)).append(":").append(String.format("%02d", seconds)).append(":").append(String.format("%03d", miliSeconds)).toString());
+            handler.postDelayed(this, 0);
+        }
+    };
 
     void scramble() {
         scramble = "";
@@ -120,12 +86,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         scrambleTv.setText(scramble);
     }
-    
-    void refreshTable() {
-        dbh = new DataBaseHandler(MainActivity.this);
-        timesList = dbh.getTimes();
-        ListAdapter adapter = new SimpleAdapter(MainActivity.this, timesList, R.layout.list_time, new String[]{"time", "scramble", "date"}, new int[]{R.id.time, R.id.scramble, R.id.date});
-        timeList.setAdapter(adapter);
-        dbh.close();
-    }
+
 }
